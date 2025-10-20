@@ -6,3 +6,6 @@ Nome,Quantidade,Componente
 "D1",1,"Vermelho LED"
 "D3",1,"Amarelo LED"
 "R1, R2, R3",3,"1 kΩ Resistor"
+
+
+https://www.tinkercad.com/things/lGfhl0RwpdT-sensor-de-temperatura-202402727/editel?returnTo=https%3A%2F%2Fwww.tinkercad.com%2Fdashboard
