@@ -1,1 +1,62 @@
+
+const int LED_IDEAL = 4;
+const int LED_NORMAL = 3;
+const int LED_CRITICO = 2;  
+void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(A1, INPUT);   
+  pinMode(A2, INPUT);   
+  pinMode(LED_IDEAL, OUTPUT);
+  pinMode(LED_NORMAL, OUTPUT);
+  pinMode(LED_CRITICO, OUTPUT);
+
+  Serial.begin(9600);  
+}
+
+void loop() {
+  int SensorT = analogRead(A2);
+
+  Serial.print("Temperatura: ");
+  Serial.print(SensorT);
+  Serial.println(" °C");
+
+  int estado;
+
+  if (SensorT <= 92) {
+    estado = 0; //IDEAL
+  } else if (SensorT <= 104) {
+    estado = 1; //NORMAR
+  } else if (SensorT > 129) {
+    estado = 2; //CRIT
+  } else {
+    estado = 3; //Sem LED
+  }
+  digitalWrite(LED_IDEAL, LOW);
+  digitalWrite(LED_NORMAL, LOW);
+  digitalWrite(LED_CRITICO, LOW);
+
+  //LIGAR O LED ::
+  switch (estado) {
+    case 0:
+      Serial.println("Ideal");
+      digitalWrite(LED_IDEAL, HIGH);
+      break;
+    case 1:
+      Serial.println("Normal");
+      digitalWrite(LED_NORMAL, HIGH);
+      break;
+    case 2:
+      Serial.println("Crítico");
+      digitalWrite(LED_CRITICO, HIGH);
+      break;
+    case 3:
+      Serial.println("Temperatura Neutra");
+      break;
+  }
+
+  delay(500); 
+
+
+
+
 https://www.tinkercad.com/things/lGfhl0RwpdT-exquisite-luulia
