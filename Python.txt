@@ -1,6 +1,11 @@
-
+#Bibliotecas
 import tkinter as tk 
 import pandas as pd
+import matplotlyb as plt
+
+
+#####----------Interface_Tkinter-------------######
+
 root = tk.root()
 button = tk.button()
 
@@ -8,9 +13,13 @@ btn_exportar = tk.Button(root, text="Exportar Excel", command =Exportar_excel)
 btn_gerar_analise = tk.Button(root, text="Gerar Analise", command =Gerar_Analise) 
 btn_Checar = tk.Button(root, text="Checar Atividade", command =Checar_atividade) 
 
+
+####----------------Funções---------------######
+
 def Exportar_excel:
 	###usa Pandas 
 def Gerar_Analise:
 	###usa Matplotlyb 
 def Checar_atividade:
 	###Contata A Dispoisitivo 
+
