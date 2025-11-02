@@ -1,25 +1,39 @@
-#Bibliotecas
-import tkinter as tk 
+import tkinter as tk
+from tkinter import filedialog, messagebox
 import pandas as pd
-import matplotlyb as plt
+import matplotlib.pyplot as plt
+import random
 
 
-#####----------Interface_Tkinter-------------######
+#------------Funçoes----------------#
+arquivo_excel = None
 
-root = tk.root()
-button = tk.button()
+def escolher_arquivo():
+   ## usa arquivo excel como global 
 
-btn_exportar = tk.Button(root, text="Exportar Excel", command =Exportar_excel) 
-btn_gerar_analise = tk.Button(root, text="Gerar Analise", command =Gerar_Analise) 
-btn_Checar = tk.Button(root, text="Checar Atividade", command =Checar_atividade) 
+def checar_atividade():
+   ##Manda um sinal como um eco que caso nao ecoe de volta é considerado inativo
 
+##Gera um grafico usando matplotlyb como o arquivo excel
+def gerar_analise():
+	##except generico
+    global arquivo_excel
+    if not arquivo_excel:
+        messagebox.showwarning("AAAAA","Escolha um arquivo Valido")
+        return
 
-####----------------Funções---------------######
+#----------------INTERFACE-----------------#
+janela = tk.Tk()
+janela.title("Janela Generical")
+janela.geometry("400x250")
 
-def Exportar_excel:
-	###usa Pandas 
-def Gerar_Analise:
-	###usa Matplotlyb 
-def Checar_atividade:
-	###Contata A Dispoisitivo 
+#------------------Botões---------------------------#
+btn_escolher = tk.Button(janela, text=" Escolher arquivo", width=25, command=escolher_arquivo)
+btn_escolher.pack(pady=10)
 
+btn_checar = tk.Button(janela, text=" Checar atividade", width=25, command=checar_atividade)
+btn_checar.pack(pady=10)
+
+btn_analise = tk.Button(janela, text=" Gerar análise", width=25, command=gerar_analise)
+btn_analise.pack(pady=10)
+janela.mainloop()
