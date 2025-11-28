@@ -1,18 +1,29 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 import pandas as pd
 import matplotlib.pyplot as plt
 import random
 
-
 #------------Funçoes----------------#
 arquivo_excel = None
+modo_selecionado = None
 
 def escolher_arquivo():
    ## usa arquivo excel como global 
+    global arquivo_excel
+    arquivo_excel = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx *.xls")])
+    if not arquivo_excel:
+        messagebox.showwarning("AAAAA","Escolha um arquivo Valido")
+    else:
+        messagebox.showinfo("OK","Arquivo selecionado")
 
 def checar_atividade():
    ##Manda um sinal como um eco que caso nao ecoe de volta é considerado inativo
+    global modo_selecionado
+    if modo_selecionado is None:
+        messagebox.showwarning("Modo","Selecione um modo")
+        return
+    messagebox.showinfo("Atividade","Modo atual: " + modo_selecionado.get())
 
 ##Gera um grafico usando matplotlyb como o arquivo excel
 def gerar_analise():
@@ -21,11 +32,29 @@ def gerar_analise():
     if not arquivo_excel:
         messagebox.showwarning("AAAAA","Escolha um arquivo Valido")
         return
+    global modo_selecionado
+    if modo_selecionado is None:
+        messagebox.showwarning("Modo","Selecione um modo")
+        return
+    try:
+        df = pd.read_excel(arquivo_excel)
+        plt.figure()
+        df.hist()
+        plt.suptitle("Analise - Modo: " + modo_selecionado.get())
+        plt.show()
+    except:
+        messagebox.showerror("Erro","Arquivo invalido ou erro na analise")
 
 #----------------INTERFACE-----------------#
 janela = tk.Tk()
 janela.title("Janela Generical")
 janela.geometry("400x250")
+
+modo_selecionado = tk.StringVar()
+
+combo = ttk.Combobox(janela, textvariable=modo_selecionado, state="readonly")
+combo["values"] = ["açai","sorvete","bebidas"]
+combo.pack(pady=10)
 
 #------------------Botões---------------------------#
 btn_escolher = tk.Button(janela, text=" Escolher arquivo", width=25, command=escolher_arquivo)
@@ -36,4 +65,5 @@ btn_checar.pack(pady=10)
 
 btn_analise = tk.Button(janela, text=" Gerar análise", width=25, command=gerar_analise)
 btn_analise.pack(pady=10)
+
 janela.mainloop()
