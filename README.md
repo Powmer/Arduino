@@ -7,5 +7,10 @@ Nome,Quantidade,Componente
 "D3",1,"Amarelo LED"
 "R1, R2, R3",3,"1 kΩ Resistor"
 
+# Requisitos
+ bibliotecas(tkinter, pyserial, pandas, matplotlyb)
+ pip install pyserial, pandas, pyplot.matplotlyb
+
+
 
 https://www.tinkercad.com/things/lGfhl0RwpdT-sensor-de-temperatura-202402727/editel?returnTo=https%3A%2F%2Fwww.tinkercad.com%2Fdashboard
