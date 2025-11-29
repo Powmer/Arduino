@@ -1,21 +1,27 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
-import pandas as pd
-import matplotlib.pyplot as plt
+from tkinter import messagebox, ttk
 import random
+import pandas as pd
+import matplotlib.pyplot as plt~´;
+combo["values"] = ["açai","sorvete","bebidas"]
+import serial
+import time
 
 #------------Funçoes----------------#
 arquivo_excel = None
 modo_selecionado = None
 
+arduino = serial.Serial('COM3', 9600, timeout=1)
+time.sleep(2)
+
+def enviar_para_arduino(valor):
+    arduino.write((valor + "\n").encode())
+    resposta = arduino.readline().decode().strip()
+    return resposta
+
 def escolher_arquivo():
    ## usa arquivo excel como global 
-    global arquivo_excel
-    arquivo_excel = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx *.xls")])
-    if not arquivo_excel:
-        messagebox.showwarning("AAAAA","Escolha um arquivo Valido")
-    else:
-        messagebox.showinfo("OK","Arquivo selecionado")
+    pass
 
 def checar_atividade():
    ##Manda um sinal como um eco que caso nao ecoe de volta é considerado inativo
@@ -23,32 +29,19 @@ def checar_atividade():
     if modo_selecionado is None:
         messagebox.showwarning("Modo","Selecione um modo")
         return
-    messagebox.showinfo("Atividade","Modo atual: " + modo_selecionado.get())
+    resposta = enviar_para_arduino(modo_selecionado.get().upper())
+    messagebox.showinfo("Arduino", resposta)
 
 ##Gera um grafico usando matplotlyb como o arquivo excel
 def gerar_analise():
 	##except generico
     global arquivo_excel
-    if not arquivo_excel:
-        messagebox.showwarning("AAAAA","Escolha um arquivo Valido")
-        return
-    global modo_selecionado
-    if modo_selecionado is None:
-        messagebox.showwarning("Modo","Selecione um modo")
-        return
-    try:
-        df = pd.read_excel(arquivo_excel)
-        plt.figure()
-        df.hist()
-        plt.suptitle("Analise - Modo: " + modo_selecionado.get())
-        plt.show()
-    except:
-        messagebox.showerror("Erro","Arquivo invalido ou erro na analise")
+    messagebox.showwarning("AAAAA","Função desativada no momento")
 
 #----------------INTERFACE-----------------#
 janela = tk.Tk()
 janela.title("Janela Generical")
-janela.geometry("400x250")
+janela.geometry("500xx500")
 
 modo_selecionado = tk.StringVar()
 
@@ -57,9 +50,6 @@ combo["values"] = ["açai","sorvete","bebidas"]
 combo.pack(pady=10)
 
 #------------------Botões---------------------------#
-btn_escolher = tk.Button(janela, text=" Escolher arquivo", width=25, command=escolher_arquivo)
-btn_escolher.pack(pady=10)
-
 btn_checar = tk.Button(janela, text=" Checar atividade", width=25, command=checar_atividade)
 btn_checar.pack(pady=10)
 
