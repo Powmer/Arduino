@@ -1,78 +1,78 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox
 import serial
 import time
 
-#------------Funcoes----------------#
-arquivo_excel = None
+#------------Funções----------------#
 modo_selecionado = None
 cooldown = None
+arduino = None
 
-arduino = serial.Serial('COM3', 9600, timeout=1)
-time.sleep(2)
+def verificar_conexao_arduino():
+    global arduino
+    try:
+        arduino = serial.Serial('COM3', 9600, timeout=1)
+        time.sleep(2)
+        messagebox.showinfo("Conexão", "Dispositivo Conectado")
+    except serial.SerialException:
+        messagebox.showerror("Erro", "Nenhum dispositivo conectado")
 
 def enviar_para_arduino(valor):
+    if arduino is None or not arduino.is_open:
+        return "Erro: Nenhuma conexão com o Arduino."
+    
     arduino.write((valor + "\n").encode())
     resposta = arduino.readline().decode().strip()
     return resposta
 
-def escolher_arquivo():
-   ## usa arquivo excel como global 
-    pass
+def trocar_modo(nm):
+    global cooldown, modo_selecionado
+
+    if cooldown is not None:
+        tempo_restante = 60 - int(time.time() - cooldown)
+        if tempo_restante > 0:
+            messagebox.showwarning(
+                "AAAAA",
+                f"Tente Novamente em {tempo_restante} segundos."
+            )
+            return
+
+    modo_selecionado = nm
+    cooldown = time.time()
+
+    resposta = enviar_para_arduino(nm)
+    messagebox.showinfo("Modo Alterado", f"Modo alterado para {nm}. Resposta do Arduino: {resposta}")
 
 def checar_atividade():
-   ##Manda um sinal como um eco que caso nao ecoe de volta é considerado inativo
     global modo_selecionado
     if modo_selecionado is None:
-        messagebox.showwarning("Modo","Selecione um modo")
+        messagebox.showwarning("Modo", "Selecione um modo")
         return
-    resposta = enviar_para_arduino(modo_selecionado.get().upper())
+    resposta = enviar_para_arduino(modo_selecionado.get())
     messagebox.showinfo("Arduino", resposta)
-
-##Gera um grafico usando matplotlyb como o arquivo excel
-def gerar_analise():
-    ##except generico
-    global arquivo_excel
-    messagebox.showwarning("AAAAA","Função desativada no momento")
 
 #----------------INTERFACE-----------------#
 janela = tk.Tk()
 janela.title("Janela Generical")
 janela.geometry("500x500")
 
-##CheckB Var
-modo_açai = tk.BooleanVar()
-modo_sorvete = tk.BooleanVar()
-modo_bebidas = tk.BooleanVar()
+modo_selecionado = tk.StringVar()
 
-#----#
-check_açai = tk.Checkbutton(janela, text="Açai", variable=modo_açai)
-check_sorvete = tk.Checkbutton(janela, text="Sorvete", variable=modo_sorvete)
-check_bebidas = tk.Checkbutton(janela, text="Bebidas", variable=modo_bebidas)
+# Radiobuttons para selecionar o modo
+check_açai = tk.Radiobutton(janela, text="Açai", variable=modo_selecionado, value="Açai", command=lambda: trocar_modo("Açai"))
+check_sorvete = tk.Radiobutton(janela, text="Sorvete", variable=modo_selecionado, value="Sorvete", command=lambda: trocar_modo("Sorvete"))
+check_bebidas = tk.Radiobutton(janela, text="Bebidas", variable=modo_selecionado, value="Bebidas", command=lambda: trocar_modo("Bebidas"))
 
-#---#
 check_açai.pack(pady=5)
 check_sorvete.pack(pady=5)
 check_bebidas.pack(pady=5)
 
-##FETCH MODE
-def obter_modo_selecionado():
-    modos = []
-    if modo_açai.get():
-        modos.append("Açai")
-    if modo_sorvete.get():
-        modos.append("Sorvete")
-    if modo_bebidas.get():
-        modos.append("Bebidas")
-    
-    return modos
-
 #------------------Botões---------------------------#
-btn_checar = tk.Button(janela, text=" Checar atividade", width=25, command=checar_atividade)
-btn_checar.pack(pady=10)
+btn_submit = tk.Button(janela, text="Submit", width=25, command=checar_atividade)
+btn_submit.pack(pady=10)
 
-btn_analise = tk.Button(janela, text=" Gerar análise", width=25, command=gerar_analise)
-btn_analise.pack(pady=10)
+btn_conectar = tk.Button(janela, text="Verificar Conexão", width=25, command=verificar_conexao_arduino)
+btn_conectar.pack(pady=10)
 
+# Inicia o loop da interface gráfica
 janela.mainloop()
-
