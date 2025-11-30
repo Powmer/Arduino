@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import messagebox
 import serial
 import time
-
 #------------Funções----------------#
 modo_selecionado = None
 cooldown = None
@@ -51,14 +50,12 @@ def checar_atividade():
     resposta = enviar_para_arduino(modo_selecionado.get())
     messagebox.showinfo("Arduino", resposta)
 
-#----------------INTERFACE-----------------#
 janela = tk.Tk()
 janela.title("Janela Generical")
 janela.geometry("500x500")
 
 modo_selecionado = tk.StringVar()
 
-# Radiobuttons para selecionar o modo
 check_açai = tk.Radiobutton(janela, text="Açai", variable=modo_selecionado, value="Açai", command=lambda: trocar_modo("Açai"))
 check_sorvete = tk.Radiobutton(janela, text="Sorvete", variable=modo_selecionado, value="Sorvete", command=lambda: trocar_modo("Sorvete"))
 check_bebidas = tk.Radiobutton(janela, text="Bebidas", variable=modo_selecionado, value="Bebidas", command=lambda: trocar_modo("Bebidas"))
@@ -66,13 +63,11 @@ check_bebidas = tk.Radiobutton(janela, text="Bebidas", variable=modo_selecionado
 check_açai.pack(pady=5)
 check_sorvete.pack(pady=5)
 check_bebidas.pack(pady=5)
-
-#------------------Botões---------------------------#
+#----------------Buttons----------------#
 btn_submit = tk.Button(janela, text="Submit", width=25, command=checar_atividade)
 btn_submit.pack(pady=10)
 
 btn_conectar = tk.Button(janela, text="Verificar Conexão", width=25, command=verificar_conexao_arduino)
 btn_conectar.pack(pady=10)
 
-# Inicia o loop da interface gráfica
 janela.mainloop()
