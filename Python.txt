@@ -3,7 +3,7 @@ from tkinter import messagebox, ttk
 import serial
 import time
 
-#------------Funçoes----------------#
+#------------Funcoes----------------#
 arquivo_excel = None
 modo_selecionado = None
 
@@ -30,7 +30,7 @@ def checar_atividade():
 
 ##Gera um grafico usando matplotlyb como o arquivo excel
 def gerar_analise():
-	##except generico
+    ##except generico
     global arquivo_excel
     messagebox.showwarning("AAAAA","Função desativada no momento")
 
@@ -39,11 +39,32 @@ janela = tk.Tk()
 janela.title("Janela Generical")
 janela.geometry("500x500")
 
-modo_selecionado = tk.StringVar()
+##CheckB Var
+modo_açai = tk.BooleanVar()
+modo_sorvete = tk.BooleanVar()
+modo_bebidas = tk.BooleanVar()
 
-combo = ttk.Combobox(janela, textvariable=modo_selecionado, state="readonly")
-combo["values"] = ["açai","sorvete","bebidas"]
-combo.pack(pady=10)
+#----#
+check_açai = tk.Checkbutton(janela, text="Açai", variable=modo_açai)
+check_sorvete = tk.Checkbutton(janela, text="Sorvete", variable=modo_sorvete)
+check_bebidas = tk.Checkbutton(janela, text="Bebidas", variable=modo_bebidas)
+
+#---#
+check_açai.pack(pady=5)
+check_sorvete.pack(pady=5)
+check_bebidas.pack(pady=5)
+
+##FETCH MODE
+def obter_modo_selecionado():
+    modos = []
+    if modo_açai.get():
+        modos.append("Açai")
+    if modo_sorvete.get():
+        modos.append("Sorvete")
+    if modo_bebidas.get():
+        modos.append("Bebidas")
+    
+    return modos
 
 #------------------Botões---------------------------#
 btn_checar = tk.Button(janela, text=" Checar atividade", width=25, command=checar_atividade)
