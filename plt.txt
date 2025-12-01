@@ -5,16 +5,10 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-# -------------------------
-# Configuração do Arduino
-# -------------------------
-arduino = serial.Serial("COM3", 9600, timeout=1)  # Troque a porta
 
+arduino = serial.Serial("COM3", 9600, timeout=1)  
 arquivo_excel = "temperatura.xlsx"
 
-# -------------------------
-# Função para ler temperatura do Arduino
-# -------------------------
 def ler_temperatura():
     linha = arduino.readline().decode().strip()
     if linha:
@@ -24,9 +18,6 @@ def ler_temperatura():
             return None
     return None
 
-# -------------------------
-# Função para salvar no Excel (append)
-# -------------------------
 def append_excel(temperatura):
     df_novo = pd.DataFrame({
         "Data": [datetime.now()],
@@ -34,23 +25,20 @@ def append_excel(temperatura):
     })
 
     try:
-        # Tenta abrir e adicionar
+    
         df_antigo = pd.read_excel(arquivo_excel)
         df_total = pd.concat([df_antigo, df_novo], ignore_index=True)
     except FileNotFoundError:
-        # Se não existir, cria
+    
         df_total = df_novo
 
     df_total.to_excel(arquivo_excel, index=False)
 
-# -------------------------
-# Função para atualizar gráfico
-# -------------------------
 def atualizar_grafico(i):
     try:
         df = pd.read_excel(arquivo_excel)
         df["Data"] = pd.to_datetime(df["Data"])
-        plt.cla()  # Limpa o gráfico
+        plt.cla()  
         plt.plot(df["Data"], df["Temperatura"], marker="o", color="red")
         plt.title("Temperatura em Tempo Real")
         plt.xlabel("Data e Hora")
@@ -59,19 +47,14 @@ def atualizar_grafico(i):
         plt.grid(True)
         plt.tight_layout()
     except:
-        pass  # Caso ainda não exista arquivo
+        pass  
 
-# -------------------------
-# Loop principal: lê temperatura a cada hora e atualiza gráfico
-# -------------------------
-# Inicializa Matplotlib
 fig = plt.figure(figsize=(10,5))
-ani = FuncAnimation(fig, atualizar_grafico, interval=60000)  # Atualiza gráfico a cada minuto
+ani = FuncAnimation(fig, atualizar_grafico, interval=60000)  
 
-# Loop para ler Arduino e salvar
 while True:
     temp = ler_temperatura()
     if temp is not None:
         append_excel(temp)
         print(f"Temperatura registrada: {temp}°C")
-    time.sleep(3600)  # Espera 1 hora
+    time.sleep(3600)  
