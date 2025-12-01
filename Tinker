@@ -1,7 +1,13 @@
+#include <Servo.h>
+
+Servo servoMotor;
+
+const int SERVO_PIN = 9;
 
 const int LED_IDEAL = 4;
 const int LED_NORMAL = 3;
 const int LED_CRITICO = 2;  
+
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(A1, INPUT);   
@@ -10,7 +16,11 @@ void setup() {
   pinMode(LED_NORMAL, OUTPUT);
   pinMode(LED_CRITICO, OUTPUT);
 
+  servoMotor.attach(SERVO_PIN);
+
   Serial.begin(9600);  
+
+  idle();
 }
 
 void loop() {
@@ -31,6 +41,7 @@ void loop() {
   } else {
     estado = 3; //Sem LED
   }
+
   digitalWrite(LED_IDEAL, LOW);
   digitalWrite(LED_NORMAL, LOW);
   digitalWrite(LED_CRITICO, LOW);
@@ -40,23 +51,41 @@ void loop() {
     case 0:
       Serial.println("Ideal");
       digitalWrite(LED_IDEAL, HIGH);
+      menos();
       break;
     case 1:
       Serial.println("Normal");
       digitalWrite(LED_NORMAL, HIGH);
+      idle();
       break;
     case 2:
       Serial.println("Crítico");
       digitalWrite(LED_CRITICO, HIGH);
+      mais();
       break;
     case 3:
       Serial.println("Temperatura Neutra");
+      idle();
       break;
   }
 
   delay(500); 
+}
 
+// FUNCOES DO SERVO
 
+void idle() {
+  servoMotor.write(90);
+}
 
+void menos() {
+  servoMotor.write(60);
+  delay(300);
+  idle();
+}
 
-https://www.tinkercad.com/things/lGfhl0RwpdT-exquisite-luulia
+void mais() {
+  servoMotor.write(120);
+  delay(300);
+  idle();
+}
