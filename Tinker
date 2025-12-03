@@ -2,90 +2,61 @@
 
 Servo servoMotor;
 
-const int SERVO_PIN = 9;
+const int SERVO_PIN = 10;
 
-const int LED_IDEAL = 4;
-const int LED_NORMAL = 3;
-const int LED_CRITICO = 2;  
+const int BOTAO_MAIS = 2;   // Botão que ativa mais()
+const int BOTAO_MENOS = 3;  // Botão que ativa menos()
 
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(A1, INPUT);   
-  pinMode(A2, INPUT);   
-  pinMode(LED_IDEAL, OUTPUT);
-  pinMode(LED_NORMAL, OUTPUT);
-  pinMode(LED_CRITICO, OUTPUT);
+  Serial.begin(9600);
+
+  pinMode(BOTAO_MAIS, INPUT_PULLUP);  
+  pinMode(BOTAO_MENOS, INPUT_PULLUP);
 
   servoMotor.attach(SERVO_PIN);
+  servoMotor.write(90);
 
-  Serial.begin(9600);  
-
-  idle();
+  Serial.println("Arduino pronto!");
+  Serial.println("Botão 2 = mais()");
+  Serial.println("Botão 3 = menos()");
+  Serial.println("Ou envie '1' ou '2' pelo Python.");
 }
 
 void loop() {
-  int SensorT = analogRead(A2);
 
-  Serial.print("Temperatura: ");
-  Serial.print(SensorT);
-  Serial.println(" °C");
+ 
+  //------Python
 
-  int estado;
+  if (Serial.available() > 0) {
+    char comando = Serial.read();
 
-  if (SensorT <= 92) {
-    estado = 0; //IDEAL
-  } else if (SensorT <= 104) {
-    estado = 1; //NORMAR
-  } else if (SensorT > 129) {
-    estado = 2; //CRIT
-  } else {
-    estado = 3; //Sem LED
-  }
-
-  digitalWrite(LED_IDEAL, LOW);
-  digitalWrite(LED_NORMAL, LOW);
-  digitalWrite(LED_CRITICO, LOW);
-
-  //LIGAR O LED ::
-  switch (estado) {
-    case 0:
-      Serial.println("Ideal");
-      digitalWrite(LED_IDEAL, HIGH);
-      menos();
-      break;
-    case 1:
-      Serial.println("Normal");
-      digitalWrite(LED_NORMAL, HIGH);
-      idle();
-      break;
-    case 2:
-      Serial.println("Crítico");
-      digitalWrite(LED_CRITICO, HIGH);
+    if (comando == '1') {
+      Serial.println("Serial → mais()");
       mais();
-      break;
-    case 3:
-      Serial.println("Temperatura Neutra");
-      idle();
-      break;
-  }
+    }
 
-  delay(500); 
+    if (comando == '2') {
+      Serial.println("Serial → menos()");
+      menos();
+    }
+  }
 }
 
-// FUNCOES DO SERVO
 
+// --------FUNÇÕES DO SERVO
 void idle() {
   servoMotor.write(90);
-}
-
-void menos() {
-  servoMotor.write(60);
-  delay(300);
-  idle();
+  delay(150);
 }
 
 void mais() {
   servoMotor.write(120);
-  delay(300);
+  delay(500);
+  idle();
+}
+
+void menos() {
+  servoMotor.write(60);
+  delay(500);
   idle();
 }
