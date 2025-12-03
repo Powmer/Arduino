@@ -2,16 +2,19 @@ import tkinter as tk
 from tkinter import messagebox
 import serial
 import time
-#------------Funções----------------#
+
+# ---------- Variáveis Globais ----------
+arduino = None
 modo_selecionado = None
 cooldown = None
-arduino = None
+COOLDOWN_TIME = 60  # segundos
 
+# ---------- Funções ----------
 def verificar_conexao_arduino():
     global arduino
     try:
         arduino = serial.Serial('COM3', 9600, timeout=1)
-        time.sleep(2)
+        time.sleep(2)  # espera Arduino resetar
         messagebox.showinfo("Conexão", "Dispositivo Conectado")
     except serial.SerialException:
         messagebox.showerror("Erro", "Nenhum dispositivo conectado")
@@ -19,55 +22,59 @@ def verificar_conexao_arduino():
 def enviar_para_arduino(valor):
     if arduino is None or not arduino.is_open:
         return "Erro: Nenhuma conexão com o Arduino."
-    
-    arduino.write((valor + "\n").encode())
-    resposta = arduino.readline().decode().strip()
-    return resposta
+    try:
+        arduino.write((valor + "\n").encode())
+        resposta = arduino.readline().decode().strip()
+        return resposta if resposta else "Sem resposta do Arduino"
+    except Exception as e:
+        return f"Erro: {e}"
 
 def trocar_modo(nm):
     global cooldown, modo_selecionado
 
+    agora = time.time()
     if cooldown is not None:
-        tempo_restante = 60 - int(time.time() - cooldown)
+        tempo_restante = COOLDOWN_TIME - int(agora - cooldown)
         if tempo_restante > 0:
             messagebox.showwarning(
-                "AAAAA",
-                f"Tente Novamente em {tempo_restante} segundos."
+                "Cooldown",
+                f"Tente novamente em {tempo_restante} segundos."
             )
             return
 
-    modo_selecionado = nm
-    cooldown = time.time()
-
+    modo_selecionado.set(nm)
+    cooldown = agora
     resposta = enviar_para_arduino(nm)
-    messagebox.showinfo("Modo Alterado", f"Modo alterado para {nm}. Resposta do Arduino: {resposta}")
+    lbl_status.config(text=f"Modo: {nm} | Arduino: {resposta}")
 
 def checar_atividade():
-    global modo_selecionado
-    if modo_selecionado is None:
+    if modo_selecionado.get() == "":
         messagebox.showwarning("Modo", "Selecione um modo")
         return
     resposta = enviar_para_arduino(modo_selecionado.get())
-    messagebox.showinfo("Arduino", resposta)
+    lbl_status.config(text=f"Arduino: {resposta}")
 
+# ---------- Interface ----------
 janela = tk.Tk()
-janela.title("Janela Generical")
-janela.geometry("500x500")
+janela.title("Controle Arduino")
+janela.geometry("400x300")
 
-modo_selecionado = tk.StringVar()
+modo_selecionado = tk.StringVar(value="")  # valor inicial vazio
 
-check_açai = tk.Radiobutton(janela, text="Açai", variable=modo_selecionado, value="Açai", command=lambda: trocar_modo("Açai"))
-check_sorvete = tk.Radiobutton(janela, text="Sorvete", variable=modo_selecionado, value="Sorvete", command=lambda: trocar_modo("Sorvete"))
-check_bebidas = tk.Radiobutton(janela, text="Bebidas", variable=modo_selecionado, value="Bebidas", command=lambda: trocar_modo("Bebidas"))
+# Radiobuttons
+tk.Radiobutton(janela, text="Açai", variable=modo_selecionado, value="Açai",
+               command=lambda: trocar_modo("Açai")).pack(pady=5)
+tk.Radiobutton(janela, text="Sorvete", variable=modo_selecionado, value="Sorvete",
+               command=lambda: trocar_modo("Sorvete")).pack(pady=5)
+tk.Radiobutton(janela, text="Bebidas", variable=modo_selecionado, value="Bebidas",
+               command=lambda: trocar_modo("Bebidas")).pack(pady=5)
 
-check_açai.pack(pady=5)
-check_sorvete.pack(pady=5)
-check_bebidas.pack(pady=5)
-#----------------Buttons----------------#
-btn_submit = tk.Button(janela, text="Submit", width=25, command=checar_atividade)
-btn_submit.pack(pady=10)
+# Botões
+tk.Button(janela, text="Submit", width=25, command=checar_atividade).pack(pady=10)
+tk.Button(janela, text="Verificar Conexão", width=25, command=verificar_conexao_arduino).pack(pady=10)
 
-btn_conectar = tk.Button(janela, text="Verificar Conexão", width=25, command=verificar_conexao_arduino)
-btn_conectar.pack(pady=10)
+# Label de status
+lbl_status = tk.Label(janela, text="Status: Nenhum modo selecionado")
+lbl_status.pack(pady=20)
 
 janela.mainloop()
