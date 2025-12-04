@@ -77,6 +77,7 @@ modo_selecionado = tk.StringVar(value="None")  # valor inicial vazio
 main_widget = tk.Frame(janela)
 main_widget.pack(pady=20)
 
+
 # Radiobuttons (armazenando referências)
 rb1 = tk.Radiobutton(main_widget, text="Açai", font=("Arial", 9, "bold"),
                      variable=modo_selecionado, value="Açai",
@@ -113,5 +114,21 @@ tk.Button(main_widget, text="Reiniciar Modos",
 # Label de status
 lbl_status = tk.Label(janela, text="Status: Nenhum modo selecionado", font=("Arial", 8, "bold"))
 lbl_status.pack(pady=20)
+
+lbl_arduino = tk.Label(janela, text="Temperatura: -- °C", font=("Arial", 10, "bold"))
+lbl_arduino.pack(pady=20)
+
+def ler_temperatura():
+    if arduino is not None and arduino.is_open:
+        try:
+            linha = arduino.readline().decode().strip()
+            if linha:
+                lbl_arduino.config(text=f"Temperatura: {linha} °C")
+        except:
+            pass
+    janela.after(1000, ler_temperatura)
+
+# inicia leitura automática
+ler_temperatura()
 
 janela.mainloop()
