@@ -4,29 +4,18 @@ Servo servoMotor;
 
 const int SERVO_PIN = 10;
 
-const int BOTAO_MAIS = 2;   // Botão que ativa mais()
-const int BOTAO_MENOS = 3;  // Botão que ativa menos()
-
 void setup() {
-  Serial.begin(9600);
-
-  pinMode(BOTAO_MAIS, INPUT_PULLUP);  
-  pinMode(BOTAO_MENOS, INPUT_PULLUP);
+  Serial.begin(9600);    // comunicação com Python/ESP8266
 
   servoMotor.attach(SERVO_PIN);
   servoMotor.write(90);
 
-  Serial.println("Arduino pronto!");
-  Serial.println("Botão 2 = mais()");
-  Serial.println("Botão 3 = menos()");
-  Serial.println("Ou envie '1' ou '2' pelo Python.");
+  Serial.println("Arduino pronto! Envie 1=mais ou 2=menos.");
 }
 
 void loop() {
 
- 
-  //------Python
-
+  // ----- RECEBER COMANDO DO PYTHON OU ESP8266 -----
   if (Serial.available() > 0) {
     char comando = Serial.read();
 
@@ -35,15 +24,15 @@ void loop() {
       mais();
     }
 
-    if (comando == '2') {
-      Serial.println("Serial → menos()");
+    else if (comando == '2') {
+      Serial.println("Serial →menos()");
       menos();
     }
   }
 }
 
 
-// --------FUNÇÕES DO SERVO
+// --------- FUNÇÕES DO SERVO 
 void idle() {
   servoMotor.write(90);
   delay(150);
