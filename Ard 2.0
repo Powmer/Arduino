@@ -9,7 +9,8 @@ unsigned long timer = 0;
 bool executando = false;
 char comandoAtual = 0;
 
-int Temp = 0;
+int TempRaw = 0;
+float TempC = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -21,12 +22,23 @@ void setup() {
 
 void loop() {
 
-  // Leitura do sensor de temperatura
-  Temp = analogRead(TEMP_PIN);
-  Serial.print("Temp RAW: ");
-  Serial.println(Temp);
+  // --sensor de temperatura ---
+  delay(650);
+  TempRaw = analogRead(TEMP_PIN);
 
-  // Recebe novo comando apenas se NÃO estiver executando nada
+
+  // TempC = TempRaw * (5.0 / 1023.0) * 100.0;
+
+  Serial.print("Temp RAW: ");
+  Serial.print(TempRaw);
+
+  Serial.print("  |  Temp aprox (C): ");
+  Serial.println(TempC);
+
+
+
+
+  // --- Recebe novo comando quando nada esta executando ---
   if (!executando && Serial.available() > 0) {
     comandoAtual = Serial.read();
     executando = true;
@@ -40,17 +52,15 @@ void loop() {
     }
   }
 
-  // Execução do ciclo temporizado
+  // --- Execução do ciclo do servo  ---
   if (executando) {
 
-    // Depois de 500 ms volta para idle
     if (millis() - timer >= 500 && comandoAtual != '0') {
       servoMotor.write(90);
       comandoAtual = '0';
       timer = millis();
     }
 
-    // Depois de 150 ms no idle libera para novo comando
     else if (comandoAtual == '0' && millis() - timer >= 150) {
       executando = false;
     }
