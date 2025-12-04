@@ -1,0 +1,58 @@
+#include <Servo.h>
+
+Servo servoMotor;
+
+const int SERVO_PIN = 10;
+const int TEMP_PIN = A2;
+
+unsigned long timer = 0;
+bool executando = false;
+char comandoAtual = 0;
+
+int Temp = 0;
+
+void setup() {
+  Serial.begin(9600);
+  servoMotor.attach(SERVO_PIN);
+  servoMotor.write(90);
+
+  Serial.println("Pronto.");
+}
+
+void loop() {
+
+  // Leitura do sensor de temperatura
+  Temp = analogRead(TEMP_PIN);
+  Serial.print("Temp RAW: ");
+  Serial.println(Temp);
+
+  // Recebe novo comando apenas se NÃO estiver executando nada
+  if (!executando && Serial.available() > 0) {
+    comandoAtual = Serial.read();
+    executando = true;
+    timer = millis();
+
+    if (comandoAtual == '1') {
+      servoMotor.write(120);   // MAIS
+    } 
+    else if (comandoAtual == '2') {
+      servoMotor.write(60);    // MENOS
+    }
+  }
+
+  // Execução do ciclo temporizado
+  if (executando) {
+
+    // Depois de 500 ms volta para idle
+    if (millis() - timer >= 500 && comandoAtual != '0') {
+      servoMotor.write(90);
+      comandoAtual = '0';
+      timer = millis();
+    }
+
+    // Depois de 150 ms no idle libera para novo comando
+    else if (comandoAtual == '0' && millis() - timer >= 150) {
+      executando = false;
+    }
+  }
+}
