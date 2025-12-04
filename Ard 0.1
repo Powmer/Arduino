@@ -1,0 +1,80 @@
+#include <Servo.h>
+
+Servo servoMotor;
+
+const int SERVO_PIN = 10;
+
+const int BOTAO_MAIS = 2;   // Botão que ativa mais()
+const int BOTAO_MENOS = 3;  // Botão que ativa menos()
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(BOTAO_MAIS, INPUT_PULLUP);  
+  pinMode(BOTAO_MENOS, INPUT_PULLUP);
+
+  servoMotor.attach(SERVO_PIN);
+  servoMotor.write(90);
+
+  Serial.println("Arduino pronto!");
+  Serial.println("Botão 2 = mais()");
+  Serial.println("Botão 3 = menos()");
+  Serial.println("Ou envie '1' ou '2' pelo Python.");
+}
+
+void loop() {
+
+  // -------------------------  
+  // 🔵 LEITURA DOS BOTÕES  
+  // -------------------------
+  if (digitalRead(BOTAO_MAIS) == LOW) {  
+    Serial.println("Botão 2 pressionado → mais()");
+    mais();
+    delay(300); 
+  }
+
+  if (digitalRead(BOTAO_MENOS) == LOW) {  
+    Serial.println("Botão 3 pressionado → menos()");
+    menos();
+    delay(300);
+  }
+
+  // -------------------------  
+  // 🟡 LEITURA DO PYTHON / SERIAL  
+  // -------------------------
+  if (Serial.available() > 0) {
+    char comando = Serial.read();
+
+    if (comando == '1') {
+      Serial.println("Serial → mais()");
+      mais();
+    }
+
+    if (comando == '2') {
+      Serial.println("Serial → menos()");
+      menos();
+    }
+  }
+}
+
+
+// -----------------------------------------
+// 🔧 FUNÇÕES DO SERVO
+// -----------------------------------------
+
+void idle() {
+  servoMotor.write(90);
+  delay(150);
+}
+
+void mais() {
+  servoMotor.write(120);
+  delay(500);
+  idle();
+}
+
+void menos() {
+  servoMotor.write(60);
+  delay(500);
+  idle();
+}
