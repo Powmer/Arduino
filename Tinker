@@ -4,48 +4,46 @@ Servo servoMotor;
 
 const int SERVO_PIN = 10;
 
-void setup() {
-  Serial.begin(9600);    // comunicação com Python/ESP8266
+unsigned long timer = 0;
+bool executando = false;
+char comandoAtual = 0;
 
+void setup() {
+  Serial.begin(9600);
   servoMotor.attach(SERVO_PIN);
   servoMotor.write(90);
 
-  Serial.println("Arduino pronto! Envie 1=mais ou 2=menos.");
+  Serial.println("Pronto.");
 }
 
 void loop() {
 
-  // ----- RECEBER COMANDO DO PYTHON OU ESP8266 -----
-  if (Serial.available() > 0) {
-    char comando = Serial.read();
+  // Recebe novo comando apenas se NÃOOOOOOO estiver executando nada
+  if (!executando && Serial.available() > 0) {
+    comandoAtual = Serial.read();
+    executando = true;
+    timer = millis();
 
-    if (comando == '1') {
-      Serial.println("Serial → mais()");
-      mais();
-    }
-
-    else if (comando == '2') {
-      Serial.println("Serial →menos()");
-      menos();
+    if (comandoAtual == '1') {
+      servoMotor.write(120);   // MAIS
+    } 
+    else if (comandoAtual == '2') {
+      servoMotor.write(60);    // MENOS
     }
   }
-}
 
+  // Execute Check
+  if (executando) {
+    // Depois de 500 ms volta para idle
+    if (millis() - timer >= 500 && comandoAtual != '0') {
+      servoMotor.write(90);
+      comandoAtual = '0';
+      timer = millis();
+    }
 
-// --------- FUNÇÕES DO SERVO 
-void idle() {
-  servoMotor.write(90);
-  delay(150);
-}
-
-void mais() {
-  servoMotor.write(120);
-  delay(500);
-  idle();
-}
-
-void menos() {
-  servoMotor.write(60);
-  delay(500);
-  idle();
+    // Depois de 150 ms no idle libera para novo comando
+    else if (comandoAtual == '0' && millis() - timer >= 150) {
+      executando = false;
+    }
+  }
 }
