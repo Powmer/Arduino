@@ -7,7 +7,8 @@ import time
 arduino = None
 modo_selecionado = None
 cooldown = None
-COOLDOWN_TIME = 60  # segundos
+COOLDOWN_TIME = 0  # segundos
+radiobuttons = []  # lista para armazenar os radiobuttons
 
 # ---------- Funções ----------
 def verificar_conexao_arduino():
@@ -47,6 +48,10 @@ def trocar_modo(nm):
     resposta = enviar_para_arduino(nm)
     lbl_status.config(text=f"Modo: {nm} | Arduino: {resposta}")
 
+    # Desabilitar todos os Radiobuttons após seleção
+    for rb in radiobuttons:
+        rb.config(state=tk.DISABLED)
+
 def checar_atividade():
     if modo_selecionado.get() == "":
         messagebox.showwarning("Modo", "Selecione um modo")
@@ -54,27 +59,59 @@ def checar_atividade():
     resposta = enviar_para_arduino(modo_selecionado.get())
     lbl_status.config(text=f"Arduino: {resposta}")
 
+def reativar_modos():
+    # Reativar todos os Radiobuttons (se quiser uma função para reativar)
+    for rb in radiobuttons:
+        rb.config(state=tk.NORMAL)
+    modo_selecionado.set("None")
+    lbl_status.config(text="Status: Nenhum modo selecionado")
+
 # ---------- Interface ----------
 janela = tk.Tk()
 janela.title("Controle Arduino")
-janela.geometry("400x300")
+janela.geometry("500x450")
 
-modo_selecionado = tk.StringVar(value="")  # valor inicial vazio
+modo_selecionado = tk.StringVar(value="None")  # valor inicial vazio
 
-# Radiobuttons
-tk.Radiobutton(janela, text="Açai", variable=modo_selecionado, value="Açai",
-               command=lambda: trocar_modo("Açai")).pack(pady=5)
-tk.Radiobutton(janela, text="Sorvete", variable=modo_selecionado, value="Sorvete",
-               command=lambda: trocar_modo("Sorvete")).pack(pady=5)
-tk.Radiobutton(janela, text="Bebidas", variable=modo_selecionado, value="Bebidas",
-               command=lambda: trocar_modo("Bebidas")).pack(pady=5)
+# ---------- Frame Principal ----------
+main_widget = tk.Frame(janela)
+main_widget.pack(pady=20)
 
-# Botões
-tk.Button(janela, text="Submit", width=25, command=checar_atividade).pack(pady=10)
-tk.Button(janela, text="Verificar Conexão", width=25, command=verificar_conexao_arduino).pack(pady=10)
+# Radiobuttons (armazenando referências)
+rb1 = tk.Radiobutton(main_widget, text="Açai", font=("Arial", 9, "bold"),
+                     variable=modo_selecionado, value="Açai",
+                     command=lambda: trocar_modo("Açai"))
+rb1.pack(pady=5)
+
+rb2 = tk.Radiobutton(main_widget, text="Sorvete", font=("Arial", 9, "bold"),
+                     variable=modo_selecionado, value="Sorvete",
+                     command=lambda: trocar_modo("Sorvete"))
+rb2.pack(pady=5)
+
+rb3 = tk.Radiobutton(main_widget, text="Bebidas", font=("Arial", 9, "bold"),
+                     variable=modo_selecionado, value="Bebidas",
+                     command=lambda: trocar_modo("Bebidas"))
+rb3.pack(pady=5)
+
+# Adicionando à lista de radiobuttons
+radiobuttons = [rb1, rb2, rb3]
+
+# ---------- Botões dentro do Main Widget ----------
+tk.Button(main_widget, text="Temperatura Produtos",
+          font=("Arial", 12, "bold"), width=20,
+          command=checar_atividade).pack(pady=10)
+
+tk.Button(main_widget, text="Verificar Conexão",
+          font=("Arial", 12, "bold"), width=20,
+          command=verificar_conexao_arduino).pack(pady=10)
+
+# Botão para reativar modos (opcional)
+tk.Button(main_widget, text="Reiniciar Modos",
+          font=("Arial", 12, "bold"), width=20,
+          command=reativar_modos).pack(pady=10)
 
 # Label de status
-lbl_status = tk.Label(janela, text="Status: Nenhum modo selecionado")
+lbl_status = tk.Label(janela, text="Status: Nenhum modo selecionado", font=("Arial", 8, "bold"))
 lbl_status.pack(pady=20)
 
 janela.mainloop()
