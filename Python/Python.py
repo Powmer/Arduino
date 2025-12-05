@@ -4,6 +4,7 @@ import serial
 import time
 import threading
 
+# ---------- VARIÁVEIS GLOBAIS ----------
 arduino = None
 modo_selecionado = None
 cooldown = None
@@ -11,20 +12,22 @@ COOLDOWN_TIME = 0.3
 radiobuttons = []
 sequencia = []
 
-md = "None"
-nm = "None"
-
+md = "None"  
+nm = "None" 
 modo_simulacao = False
-temperatura_simulada = 0
+temperatura_atual = 0  
 
 modo_temperatura = {
     "Açai": -10,
     "Sorvete": -20,
     "Bebidas": 5,
+    "Torta": 10,
     "None": 0
 }
 
-# ---------- FUNÇÔES ----------
+atualizando_sequencia = False 
+
+# ---------- FUNÇÕES ----------
 def verificar_conexao_arduino():
     global arduino
     try:
@@ -46,38 +49,43 @@ def enviar_para_arduino(valor):
 
 # ---------- PROCESSAR SEQUÊNCIA ----------
 def processar_sequencia():
+    global md, atualizando_sequencia, temperatura_atual
     if sequencia:
+        atualizando_sequencia = True
         item = sequencia.pop(0)
         enviar_para_arduino(item)
         janela.after(350, processar_sequencia)
+    else:
+     
+        temperatura_atual = modo_temperatura.get(nm, 0)
+        lbl_arduino.config(text=f"Temperatura: {temperatura_atual} °C")
+        md = nm 
+        atualizando_sequencia = False
 
 # ---------- TROCAR MODO ----------
 def trocar_modo(novo_modo):
-    global md, nm, cooldown
+    global nm, cooldown, sequencia
 
     agora = time.time()
-    if cooldown is not None:
-        if agora - cooldown < COOLDOWN_TIME:
-            return
+    if cooldown is not None and agora - cooldown < COOLDOWN_TIME:
+        return
 
     nm = novo_modo
     modo_selecionado.set(nm)
     cooldown = agora
 
-    dif = modo_temperatura[nm] - modo_temperatura[md]
+   
+    dif = modo_temperatura[nm] - temperatura_atual
 
     sequencia.clear()
     if dif > 0:
         sequencia.extend(["mais"] * dif)
-        print("Mais")
     elif dif < 0:
         sequencia.extend(["menos"] * abs(dif))
-        print("MEnos")
 
     processar_sequencia()
-    md = nm
 
-# ---------- LEITURA EM TEMPO REAL ----------
+# ---------- LEITURA EM TEMPO REAL (THREAD) ----------
 def iniciar_leitura_thread():
     thread = threading.Thread(target=ler_dados_arduino, daemon=True)
     thread.start()
@@ -88,27 +96,26 @@ def ler_dados_arduino():
         if arduino and arduino.is_open:
             try:
                 linha = arduino.readline().decode().strip()
-
-                if not modo_simulacao and linha.startswith("TEMP:"):
-                    temp = linha.replace("TEMP:", "")
-                    lbl_arduino.config(text=f"Temperatura: {temp} °C")
-
-                elif linha == "MAIS":
-                    lbl_status.config(text="Status: Servo executou MAIS")
-
-                elif linha == "MENOS":
-                    lbl_status.config(text="Status: Servo executou MENOS")
-
+                if linha in ["MAIS", "MENOS"]:
+                    janela.after(0, lambda: lbl_status.config(
+                        text=f"Status: Servo executou {linha}"
+                    ))
             except:
                 pass
         time.sleep(0.05)
 
 # ---------- RESET ----------
 def reativar_modos():
+    global md, nm, temperatura_atual, atualizando_sequencia
     modo_selecionado.set("None")
+    md = "None"
+    nm = "None"
+    temperatura_atual = 0
+    atualizando_sequencia = False
     lbl_status.config(text="Status: Resetado")
+    lbl_arduino.config(text="Temperatura: -- °C")
 
-# ---------- CONFIG ----------
+# ---------- CONFIGURAÇÕES ----------
 def editar_configuracoes():
     def salvar():
         modo = entry_modo.get().strip()
@@ -143,7 +150,6 @@ def atualizar_radiobuttons():
     for modo, temp in modo_temperatura.items():
         if modo == "None":
             continue
-
         texto = f"{modo} ({temp}°C)"
         rb = tk.Radiobutton(
             main_widget,
@@ -157,15 +163,15 @@ def atualizar_radiobuttons():
 
 # ---------- SIMULADOR ----------
 def abrir_simulador():
-    global temperatura_simulada
+    global temperatura_atual
 
     def mudar(valor):
-        global temperatura_simulada
-        temperatura_simulada += valor
-        lbl_arduino.config(text=f"Temperatura: {temperatura_simulada} °C")
+        global temperatura_atual
+        temperatura_atual += valor
+        lbl_arduino.config(text=f"Temperatura: {temperatura_atual} °C")
 
     sim = tk.Toplevel(janela)
-    sim.title("Simulador de Temperatura")
+    sim.title("Simulação de Temperatura")
     sim.geometry("250x280")
 
     tk.Label(sim, text="Simulação de Sensor", font=("Arial", 12, "bold")).pack(pady=10)
@@ -179,10 +185,9 @@ def abrir_simulador():
 def alternar_simulacao():
     global modo_simulacao
     modo_simulacao = not modo_simulacao
-
     if modo_simulacao:
         lbl_status.config(text="Status: MODO SIMULAÇÃO ATIVADO")
-        lbl_arduino.config(text=f"Temperatura: {temperatura_simulada} °C")
+        lbl_arduino.config(text=f"Temperatura: {temperatura_atual} °C")
     else:
         lbl_status.config(text="Status: MODO REAL ATIVADO")
 
@@ -201,8 +206,6 @@ atualizar_radiobuttons()
 tk.Button(main_widget, text="Verificar Conexão", width=25,
           command=verificar_conexao_arduino).pack(pady=10)
 
-tk.Button(main_widget, text="Reiniciar Modos", width=25,
-          command=reativar_modos).pack(pady=10)
 
 tk.Button(main_widget, text="Configurações", width=25,
           command=editar_configuracoes).pack(pady=10)
