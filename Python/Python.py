@@ -132,3 +132,4 @@ def ler_temperatura():
 ler_temperatura()
 
 janela.mainloop()
+
