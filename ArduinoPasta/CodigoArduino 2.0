@@ -3,12 +3,21 @@
 Servo servoMotor;
 
 const int SERVO_PIN = 10;
-const int TEMP_PIN = A2;
+const int TEMP_PIN  = A2;
 
+// ===== FILA =====
+#define MAX_FILA 100
+String fila[MAX_FILA];
+int inicioFila = 0;
+int fimFila = 0;
+
+// ===== SERVO =====
 unsigned long timer = 0;
 bool executando = false;
-char comandoAtual = 0;
+bool voltando = false;
+String comandoAtual = "";
 
+// ===== TEMPERATURA =====
 int TempRaw = 0;
 float TempC = 0;
 
@@ -16,55 +25,78 @@ void setup() {
   Serial.begin(9600);
   servoMotor.attach(SERVO_PIN);
   servoMotor.write(90);
-
   Serial.println("Pronto.");
+}
+
+
+bool filaVazia() {
+  return inicioFila == fimFila;
+}
+
+void adicionarFila(String cmd) {
+  int prox = (fimFila + 1) % MAX_FILA;
+  if (prox != inicioFila) {
+    fila[fimFila] = cmd;
+    fimFila = prox;
+  }
+}
+
+String pegarFila() {
+  if (!filaVazia()) {
+    String cmd = fila[inicioFila];
+    inicioFila = (inicioFila + 1) % MAX_FILA;
+    return cmd;
+  }
+  return "";
 }
 
 void loop() {
 
-  // --sensor de temperatura ---
-  delay(650);
+  // ===== TEMPERATURA =====
   TempRaw = analogRead(TEMP_PIN);
+  TempC = TempRaw * (5.0 / 1023.0) * 100.0;
 
-
-  // TempC = TempRaw * (5.0 / 1023.0) * 100.0;
-
-  Serial.print("Temp RAW: ");
-  Serial.print(TempRaw);
-
-  Serial.print("  |  Temp aprox (C): ");
+  Serial.print("TEMP:");
   Serial.println(TempC);
 
+  // ===== RECEBE TODOS OS COMANDOS DO PYTHON =====
+  while (Serial.available() > 0) {
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+    adicionarFila(cmd);
+  }
 
-
-
-  // --- Recebe novo comando quando nada esta executando ---
-  if (!executando && Serial.available() > 0) {
-    comandoAtual = Serial.read();
+  
+  if (!executando && !filaVazia()) {
+    comandoAtual = pegarFila();
     executando = true;
+    voltando = false;
     timer = millis();
 
-    if (comandoAtual == '1') {
-      servoMotor.write(120);   // MAIS
-      System.ou.println("MAIS")
+    if (comandoAtual == "mais") {
+      servoMotor.write(120);
+      Serial.println("MAIS");
     } 
-    else if (comandoAtual == '2') {
-      servoMotor.write(60);    // MENOS
-      System.ou.println("Menos")
+    else if (comandoAtual == "menos") {
+      servoMotor.write(60);
+      Serial.println("MENOS");
     }
   }
 
-  // --- Execução do ciclo do servo  ---
+  // ===== CONTROLE DE TEMPO DO MOVIMENTO =====
   if (executando) {
 
-    if (millis() - timer >= 500 && comandoAtual != '0') {
+    // Tempo no extremo
+    if (!voltando && millis() - timer >= 500) {
       servoMotor.write(90);
-      comandoAtual = '0';
+      voltando = true;
       timer = millis();
     }
 
-    else if (comandoAtual == '0' && millis() - timer >= 150) {
+
+    else if (voltando && millis() - timer >= 300) {
       executando = false;
+      voltando = false;
     }
   }
 }
