@@ -46,9 +46,11 @@ void loop() {
 
     if (comandoAtual == '1') {
       servoMotor.write(120);   // MAIS
+      System.ou.println("MAIS")
     } 
     else if (comandoAtual == '2') {
       servoMotor.write(60);    // MENOS
+      System.ou.println("Menos")
     }
   }
 
