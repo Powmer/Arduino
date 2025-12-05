@@ -1,12 +1,16 @@
-sequencia = []
-md=-15
-nm=-20
+import serial
+import time
 
-def alterar_temp(md,nm):
-    dif = -1*(md - nm)
-    print(dif)
-    if dif<0:
-        for i in range(-1*(dif)):
+sequencia = []
+md = -15
+nm = -20
+###botarVariaveis da interface
+arduino = serial.Serial('COM4', 9600) 
+time.sleep(2) 
+def alterar_temp(md, nm):
+    dif = nm - md
+    if dif < 0:
+        for i in range(-dif):
             app_menos()
     else:
         for i in range(dif):
@@ -14,22 +18,31 @@ def alterar_temp(md,nm):
 
 def app_mais():
     sequencia.append("mais")
+
 def app_menos():
     sequencia.append("menos")
 
-alterar_temp(md,nm)
+alterar_temp(md, nm)
 
 while len(sequencia) > 0:
     item = sequencia.pop(0)
-    if item == "mais":
-        print("mais")
-    elif item == "menos":
-        print("menos")
+    arduino.write((item + "\n").encode())
+    print("Enviado:", item)
+    time.sleep(0.5)
 
-# encaixa isso no arduino
-#void loop() {
-#  if (Serial.available() > 0) {
-#    String comando = Serial.readStringUntil('\n');
-#    comando.trim();
-#  if (comando == "mais"){Serial.println("Recebi MAIS");}
-# faz o mesmo com menos
+#------------#
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    String comando = Serial.readStringUntil('\n');
+    comando.trim();
+    if (comando == "mais") {
+      Serial.println("MAIS");
+    } else if (comando == "menos") {
+      Serial.println("MENOS");
+    }
+  }
+}
