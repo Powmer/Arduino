@@ -15,7 +15,7 @@ def alterar_temp(md,nm):
 def app_mais():
     barco.append("mais")
 def app_menos():
-    barco.append("menos")
+    barco.append("menos")0
 alterar_temp(md,nm)
 print(barco)
 
@@ -28,7 +28,10 @@ while barco.len() >0:
         digital.write(90)
         barco.pop()
         print(barco)
-    
-
-    
-
+# encaixa isso no arduino
+#void loop() {
+#  if (Serial.available() > 0) {
+#    String comando = Serial.readStringUntil('\n');
+#    comando.trim(); 
+#  if (comando == "mais"){Serial.println("Recebi MAIS");}
+# faz o mesmo com menos
