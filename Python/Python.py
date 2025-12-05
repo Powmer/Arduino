@@ -2,16 +2,20 @@ import tkinter as tk
 from tkinter import messagebox
 import serial
 import time
-# ---------- Variáveis Globais ----------
+import threading
+
 arduino = None
 modo_selecionado = None
 cooldown = None
-COOLDOWN_TIME = 5
+COOLDOWN_TIME = 0.3
 radiobuttons = []
 sequencia = []
 
 md = "None"
 nm = "None"
+
+modo_simulacao = False
+temperatura_simulada = 0
 
 modo_temperatura = {
     "Açai": -10,
@@ -19,48 +23,41 @@ modo_temperatura = {
     "Bebidas": 5,
     "None": 0
 }
-# ---------- Funções ----------
+
+# ---------- FUNÇÔES ----------
 def verificar_conexao_arduino():
     global arduino
-    if arduino is not None and arduino.is_open:
-        messagebox.showinfo("Conexão", "Arduino já conectado")
-        return
     try:
-        arduino = serial.Serial('COM3', 9600, timeout=1)
+        arduino = serial.Serial('COM6', 9600, timeout=1)
         time.sleep(2)
-        messagebox.showinfo("Conexão", "Dispositivo Conectado")
-    except serial.SerialException:
+        messagebox.showinfo("Conexão", "Arduino Conectado")
+        iniciar_leitura_thread()
+    except:
         messagebox.showerror("Erro", "Nenhum dispositivo conectado")
 
+# ---------- ENVIO ----------
 def enviar_para_arduino(valor):
-    if arduino is None or not arduino.is_open and len(sequencia):
-        return "Erro: Nenhuma conexão com o Arduino."
+    if arduino is None or not arduino.is_open:
+        return
     try:
         arduino.write((valor + "\n").encode())
-        start_time = time.time()
-        while time.time() - start_time < 2:
-            if arduino.in_waiting:
-                resposta = arduino.readline().decode().strip()
-                return resposta if resposta else "Sem resposta do Arduino"
-        return "Sem resposta do Arduino"
-    except Exception as e:
-        return f"Erro: {e}"
+    except:
+        pass
 
+# ---------- PROCESSAR SEQUÊNCIA ----------
 def processar_sequencia():
     if sequencia:
         item = sequencia.pop(0)
-        resposta = enviar_para_arduino(item)
-        lbl_status.config(text=f"Enviado: {item} | Arduino: {resposta}")
-        janela.after(500, processar_sequencia)
+        enviar_para_arduino(item)
+        janela.after(350, processar_sequencia)
 
+# ---------- TROCAR MODO ----------
 def trocar_modo(novo_modo):
-    global md, nm, cooldown, modo_selecionado
+    global md, nm, cooldown
 
     agora = time.time()
     if cooldown is not None:
-        tempo_restante = COOLDOWN_TIME - int(agora - cooldown)
-        if tempo_restante > 0:
-            messagebox.showwarning("Cooldown", f"Tente novamente em {tempo_restante} segundos.")
+        if agora - cooldown < COOLDOWN_TIME:
             return
 
     nm = novo_modo
@@ -72,87 +69,127 @@ def trocar_modo(novo_modo):
     sequencia.clear()
     if dif > 0:
         sequencia.extend(["mais"] * dif)
+        print("Mais")
     elif dif < 0:
-        sequencia.extend(["menos"] * (-dif))
+        sequencia.extend(["menos"] * abs(dif))
+        print("MEnos")
 
     processar_sequencia()
     md = nm
 
-    for rb in radiobuttons:
-        rb.config(state=tk.DISABLED)
-    janela.after(COOLDOWN_TIME * 1000, lambda: [rb.config(state=tk.NORMAL) for rb in radiobuttons])
+# ---------- LEITURA EM TEMPO REAL ----------
+def iniciar_leitura_thread():
+    thread = threading.Thread(target=ler_dados_arduino, daemon=True)
+    thread.start()
 
-def checar_atividade():
-    if modo_selecionado.get() == "":
-        messagebox.showwarning("Modo", "Selecione um modo")
-        return
-    resposta = enviar_para_arduino(modo_selecionado.get())
-    lbl_status.config(text=f"Arduino: {resposta}")
-
-def reativar_modos():
-    for rb in radiobuttons:
-        rb.config(state=tk.NORMAL)
-    modo_selecionado.set("None")
-    lbl_status.config(text="Status: Nenhum modo selecionado")
-
-def ler_temperatura():
-    if arduino is not None and arduino.is_open:
-        try:
-            if arduino.in_waiting > 0:
+def ler_dados_arduino():
+    global arduino
+    while True:
+        if arduino and arduino.is_open:
+            try:
                 linha = arduino.readline().decode().strip()
-                if linha:
-                    lbl_arduino.config(text=f"Temperatura: {linha} °C")
-        except:
-            pass
-    janela.after(1000, ler_temperatura)
 
+                if not modo_simulacao and linha.startswith("TEMP:"):
+                    temp = linha.replace("TEMP:", "")
+                    lbl_arduino.config(text=f"Temperatura: {temp} °C")
+
+                elif linha == "MAIS":
+                    lbl_status.config(text="Status: Servo executou MAIS")
+
+                elif linha == "MENOS":
+                    lbl_status.config(text="Status: Servo executou MENOS")
+
+            except:
+                pass
+        time.sleep(0.05)
+
+# ---------- RESET ----------
+def reativar_modos():
+    modo_selecionado.set("None")
+    lbl_status.config(text="Status: Resetado")
+
+# ---------- CONFIG ----------
 def editar_configuracoes():
     def salvar():
         modo = entry_modo.get().strip()
         temp = entry_temp.get().strip()
-        if not modo or not temp:
-            messagebox.showwarning("Erro", "Preencha ambos os campos")
-            return
         try:
-            temp_val = int(temp)
-            modo_temperatura[modo] = temp_val
-            messagebox.showinfo("Sucesso", f"Modo '{modo}' salvo com {temp_val}°C")
-            janela_edit.destroy()
+            modo_temperatura[modo] = int(temp)
             atualizar_radiobuttons()
+            janela_edit.destroy()
         except:
-            messagebox.showerror("Erro", "Temperatura inválida")
+            messagebox.showerror("Erro", "Dados inválidos")
 
     janela_edit = tk.Toplevel(janela)
     janela_edit.title("Configurações")
-    janela_edit.geometry("300x150")
 
-    tk.Label(janela_edit, text="Nome do Modo:").pack(pady=5)
+    tk.Label(janela_edit, text="Modo").pack()
     entry_modo = tk.Entry(janela_edit)
-    entry_modo.pack(pady=5)
+    entry_modo.pack()
 
-    tk.Label(janela_edit, text="Temperatura:").pack(pady=5)
+    tk.Label(janela_edit, text="Temperatura").pack()
     entry_temp = tk.Entry(janela_edit)
-    entry_temp.pack(pady=5)
+    entry_temp.pack()
 
     tk.Button(janela_edit, text="Salvar", command=salvar).pack(pady=10)
 
+# ---------- ATUALIZAR BOTÕES ----------
 def atualizar_radiobuttons():
     global radiobuttons
     for rb in radiobuttons:
         rb.destroy()
     radiobuttons.clear()
-    for modo in modo_temperatura.keys():
+
+    for modo, temp in modo_temperatura.items():
         if modo == "None":
             continue
-        rb = tk.Radiobutton(main_widget, text=modo, font=("Arial", 9, "bold"),
-                            variable=modo_selecionado, value=modo,
-                            command=lambda m=modo: trocar_modo(m))
+
+        texto = f"{modo} ({temp}°C)"
+        rb = tk.Radiobutton(
+            main_widget,
+            text=texto,
+            variable=modo_selecionado,
+            value=modo,
+            command=lambda m=modo: trocar_modo(m)
+        )
         rb.pack(pady=5)
         radiobuttons.append(rb)
-# ---------- Frame Principal ----------
+
+# ---------- SIMULADOR ----------
+def abrir_simulador():
+    global temperatura_simulada
+
+    def mudar(valor):
+        global temperatura_simulada
+        temperatura_simulada += valor
+        lbl_arduino.config(text=f"Temperatura: {temperatura_simulada} °C")
+
+    sim = tk.Toplevel(janela)
+    sim.title("Simulador de Temperatura")
+    sim.geometry("250x280")
+
+    tk.Label(sim, text="Simulação de Sensor", font=("Arial", 12, "bold")).pack(pady=10)
+
+    tk.Button(sim, text="+1 °C", width=15, command=lambda: mudar(1)).pack(pady=5)
+    tk.Button(sim, text="-1 °C", width=15, command=lambda: mudar(-1)).pack(pady=5)
+    tk.Button(sim, text="+5 °C", width=15, command=lambda: mudar(5)).pack(pady=5)
+    tk.Button(sim, text="-5 °C", width=15, command=lambda: mudar(-5)).pack(pady=5)
+
+# ---------- SIMULAÇÃO ON/OFF ----------
+def alternar_simulacao():
+    global modo_simulacao
+    modo_simulacao = not modo_simulacao
+
+    if modo_simulacao:
+        lbl_status.config(text="Status: MODO SIMULAÇÃO ATIVADO")
+        lbl_arduino.config(text=f"Temperatura: {temperatura_simulada} °C")
+    else:
+        lbl_status.config(text="Status: MODO REAL ATIVADO")
+
+# ---------- INTERFACE ----------
 janela = tk.Tk()
 janela.title("Controle Arduino")
-janela.geometry("500x600")
+janela.geometry("450x650")
 
 modo_selecionado = tk.StringVar(value="None")
 
@@ -161,27 +198,25 @@ main_widget.pack(pady=20)
 
 atualizar_radiobuttons()
 
-tk.Button(main_widget, text="Verificar Conexão",
-          font=("Arial", 12, "bold"), width=25,
+tk.Button(main_widget, text="Verificar Conexão", width=25,
           command=verificar_conexao_arduino).pack(pady=10)
 
-tk.Button(main_widget, text="Temperatura Produtos",
-          font=("Arial", 12, "bold"), width=25,
-          command=checar_atividade).pack(pady=10)
-
-tk.Button(main_widget, text="Reiniciar Modos",
-          font=("Arial", 12, "bold"), width=25,
+tk.Button(main_widget, text="Reiniciar Modos", width=25,
           command=reativar_modos).pack(pady=10)
 
-tk.Button(main_widget, text="Configurações",
-          font=("Arial", 12, "bold"), width=25,
+tk.Button(main_widget, text="Configurações", width=25,
           command=editar_configuracoes).pack(pady=10)
 
-lbl_status = tk.Label(janela, text="Status: Nenhum modo selecionado", font=("Arial", 8, "bold"))
+tk.Button(main_widget, text="Simulador de Temperatura", width=25,
+          command=abrir_simulador).pack(pady=10)
+
+tk.Button(main_widget, text="Ativar / Desativar Simulação", width=25,
+          command=alternar_simulacao).pack(pady=10)
+
+lbl_status = tk.Label(janela, text="Status: Modo real ativo")
 lbl_status.pack(pady=20)
 
-lbl_arduino = tk.Label(janela, text="Temperatura: -- °C", font=("Arial", 10, "bold"))
-lbl_arduino.pack(pady=20)
+lbl_arduino = tk.Label(janela, text="Temperatura: -- °C")
+lbl_arduino.pack(pady=10)
 
-ler_temperatura()
 janela.mainloop()
