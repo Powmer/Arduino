@@ -19,3 +19,16 @@ def app_menos():
 alterar_temp(md,nm)
 print(barco)
 
+while barco.len() >0:
+    for "mais" in(barco):
+        digital.write(90)
+        barco.pop()
+        print(barco)
+    for "menos" in(barco):
+        digital.write(90)
+        barco.pop()
+        print(barco)
+    
+
+    
+
