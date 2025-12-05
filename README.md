@@ -14,6 +14,7 @@ Nome,Quantidade,Componente
 # Refencial Teorico 
 1. Maruch, Stef, and Aahz Maruch. Python for dummies. John Wiley & Sons, 2006.
 2. Desai, Pratik. Python programming for Arduino. Packt Publishing Ltd, 2015.
+3.Elisabeth Pratidhina et al. (2021).
 
 
 https://www.tinkercad.com/things/lGfhl0RwpdT-sensor-de-temperatura-202402727/editel?returnTo=https%3A%2F%2Fwww.tinkercad.com%2Fdashboard
