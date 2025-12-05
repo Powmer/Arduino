@@ -11,21 +11,23 @@ def alterar_temp(md,nm):
         for i in range(dif):
             app_mais()
 
-
 def app_mais():
     sequencia.append("mais")
 def app_menos():
-    sequencia.append("menos")0
+    sequencia.append("menos")
+
 alterar_temp(md,nm)
 print(sequencia)
-
-while sequencia.len() >0:
+#TIRA_OFORCOOWHILEPLS
+while len(sequencia) >0:
     for "mais" in(sequencia):
         sequencia.pop()
         print(sequencia)
     for "menos" in(sequencia):
         sequencia.pop()
         print(sequencia)
+
+
 # encaixa isso no arduino
 #void loop() {
 #  if (Serial.available() > 0) {
