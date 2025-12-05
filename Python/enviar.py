@@ -1,4 +1,4 @@
-barco = []
+sequencia = []
 md=-15
 nm=-20
 def alterar_temp(md,nm):
@@ -13,21 +13,19 @@ def alterar_temp(md,nm):
 
 
 def app_mais():
-    barco.append("mais")
+    sequencia.append("mais")
 def app_menos():
-    barco.append("menos")0
+    sequencia.append("menos")0
 alterar_temp(md,nm)
-print(barco)
+print(sequencia)
 
-while barco.len() >0:
-    for "mais" in(barco):
-        digital.write(90)
-        barco.pop()
-        print(barco)
-    for "menos" in(barco):
-        digital.write(90)
-        barco.pop()
-        print(barco)
+while sequencia.len() >0:
+    for "mais" in(sequencia):
+        sequencia.pop()
+        print(sequencia)
+    for "menos" in(sequencia):
+        sequencia.pop()
+        print(sequencia)
 # encaixa isso no arduino
 #void loop() {
 #  if (Serial.available() > 0) {
